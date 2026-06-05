@@ -1,43 +1,43 @@
 import os
+import json
 import discord
 import gspread
 from google.oauth2.service_account import Credentials
 
-# =========================
-# ENV VARIABLES (RENDER)
-# =========================
+# ======================
+# ENV
+# ======================
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 SHEET_NAME = os.environ["SHEET_NAME"]
 
-# =========================
-# GOOGLE SHEETS SETUP
-# =========================
-GOOGLE_CREDS_FILE = "wow-avoid-bot-7d21d276f6a7.json"
-
+# ======================
+# GOOGLE CREDS (SECURE)
+# ======================
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_file(GOOGLE_CREDS_FILE, scopes=scope)
-gs_client = gspread.authorize(creds)
+creds_dict = json.loads(os.environ["GOOGLE_CREDS"])
 
+creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+
+gs_client = gspread.authorize(creds)
 sheet = gs_client.open(SHEET_NAME).sheet1
 
-# =========================
-# DISCORD SETUP
-# =========================
+# ======================
+# DISCORD
+# ======================
 intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-
-# =========================
-# FUNCTIONS
-# =========================
-def add_player(name: str):
+# ======================
+# LOGIC
+# ======================
+def add_player(name):
     records = sheet.get_all_records()
 
     for i, row in enumerate(records):
@@ -54,18 +54,17 @@ def get_list():
     records = sheet.get_all_records()
 
     if not records:
-        return "📭 Avoid list is empty"
+        return "📭 Empty list"
 
-    msg = "🚫 **WoW Avoid List:**\n\n"
-    for row in records:
-        msg += f"• {row.get('Player')} — {row.get('Reports')} reports\n"
-
+    msg = "🚫 WoW Avoid List:\n\n"
+    for r in records:
+        msg += f"• {r['Player']} — {r['Reports']}\n"
     return msg
 
 
-# =========================
+# ======================
 # EVENTS
-# =========================
+# ======================
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user}")
@@ -81,27 +80,20 @@ async def on_message(message):
 
     content = message.content.strip()
 
-    # ADD PLAYER
     if content.startswith("!avoid"):
         parts = content.split()
-
         if len(parts) < 2:
-            await message.channel.send("❌ Usage: !avoid PlayerName")
+            await message.channel.send("Usage: !avoid name")
             return
 
         name = parts[1]
-        reports = add_player(name)
+        r = add_player(name)
 
-        await message.channel.send(f"✅ {name} added ({reports} reports)")
+        await message.channel.send(f"Added {name} ({r})")
         return
 
-    # SHOW LIST
     if content == "!list":
         await message.channel.send(get_list())
-        return
 
 
-# =========================
-# RUN BOT
-# =========================
 client.run(DISCORD_TOKEN)
