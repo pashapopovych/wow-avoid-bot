@@ -13,7 +13,7 @@ SHEET_NAME = os.environ["SHEET_NAME"]
 # =========================
 # GOOGLE SHEETS SETUP
 # =========================
-GOOGLE_CREDS_FILE = "wow-avoid-bot-e0cddd94f409.json"
+GOOGLE_CREDS_FILE = "wow-avoid-bot-9f7a7e37d743.json"
 
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
