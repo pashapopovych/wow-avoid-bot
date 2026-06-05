@@ -4,17 +4,17 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # =========================
-# CONFIG (ENV VARIABLES)
+# ENV VARIABLES (RENDER)
 # =========================
-DISCORD_TOKEN = os.environ["MTUxMjUyNDk0MDA5NDYwNzQwMA.Ga_0C9.WDtxZL_uyNdwNx0gdnpvvp4AhE_itvJsFukk90"]
-CHANNEL_ID = int(os.environ["1504613344105988249"])
-
-SHEET_NAME = os.environ["WoW Avoid List"]
-GOOGLE_CREDS_FILE = "wow-avoid-bot-e0cddd94f409.json"  # файл в репо
+DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
+CHANNEL_ID = int(os.environ["CHANNEL_ID"])
+SHEET_NAME = os.environ["SHEET_NAME"]
 
 # =========================
 # GOOGLE SHEETS SETUP
 # =========================
+GOOGLE_CREDS_FILE = "credentials.json"
+
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -41,8 +41,8 @@ def add_player(name: str):
     records = sheet.get_all_records()
 
     for i, row in enumerate(records):
-        if row["Player"] == name:
-            new_reports = int(row["Reports"]) + 1
+        if row.get("Player") == name:
+            new_reports = int(row.get("Reports", 0)) + 1
             sheet.update_cell(i + 2, 2, new_reports)
             return new_reports
 
@@ -52,8 +52,9 @@ def add_player(name: str):
 
 def get_list():
     records = sheet.get_all_records()
+
     if not records:
-        return "📭 List is empty"
+        return "📭 Avoid list is empty"
 
     msg = "🚫 **WoW Avoid List:**\n\n"
     for row in records:
@@ -101,6 +102,6 @@ async def on_message(message):
 
 
 # =========================
-# RUN
+# RUN BOT
 # =========================
 client.run(DISCORD_TOKEN)
